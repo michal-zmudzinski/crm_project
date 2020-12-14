@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Users</title>
+    <style>
+      table {
+        border-collapse: collapse;
+      }
+
+      table tr th,
+      table tr td {
+        border: 1px solid black;
+        padding: 5px;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <div>
+        <table id="UserTable">
+          <tr>
+            <th>id</th>
+            <th>name</th>
+            <th>surname</th>
+            <th>dateOfBirht</th>
+            <th>login</th>
+            <th>password</th>
+            <th>isDeleted</th>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <script type="text/javascript">
+      var apiroot = "http://127.0.0.1:8000/api";
+      var csrftoken = getCookie("csrftoken");
+      var listLength = 0;
+
+      function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== "") {
+          const cookies = document.cookie.split(";");
+          for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === name + "=") {
+              cookieValue = decodeURIComponent(
+                cookie.substring(name.length + 1)
+              );
+              break;
+            }
+          }
+        }
+        return cookieValue;
+      }
+
+      function listUsers(url) {
+        var table = document.getElementById("UserTable");
+        var endpoint = url + "/user-list";
+        fetch(endpoint)
+          .then((response) => response.json())
+          .then(function (data) {
+            var users = data;
+            for (var i in users) {
+              try {
+                document.getElementById(`user-row-${i}`).remove();
+              } catch (err) {}
+              var row = `
+              <tr id="user-row-${i}">
+                <td>${users[i].id}</td>
+                <td>${users[i].name}</td>
+                <td>${users[i].surname}</td>
+                <td>${users[i].dateOfBirth}</td>
+                <td>${users[i].login}</td>
+                <td>${users[i].password}</td>
+                <td>${users[i].isDeleted}</td>
+                <td>
+                  <input type="button" value="Delete" class="deleteUser" onclick="deleteUser('${url}', ${users[i].id})">
+                  </td>
+              </tr>
+              `;
+              table.innerHTML += row;
+            }
+          });
+      }
+
+      function deleteUser(url, id) {
+        var endpoint = url + "/user-delete/" + id;
+        const request = new Request(endpoint, {
+          headers: { "X-CSRFToken": csrftoken },
+        });
+        fetch(request, {
+          method: "DELETE",
+          mode: "same-origin",
+        }).then((response) => {
+          listUsers(apiroot);
+        });
+      }
+
+      listUsers(apiroot);
+    </script>
+  </body>
+</html>
