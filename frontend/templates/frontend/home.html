@@ -28,9 +28,24 @@
             <th>dateOfBirht</th>
             <th>login</th>
             <th>password</th>
-            <th>isDeleted</th>
           </tr>
         </table>
+        <div id="form-wrapper">
+          <h1 id="form-header">Create</h1>
+          <form action="" method="post" id=form>
+            <input type="text" placeholder="Id" id="formId" /><br />
+            <input type="text" placeholder="Name" id="formName" /><br />
+            <input type="text" placeholder="Surname" id="formSurname" /><br />
+            <input
+              type="text"
+              placeholder="Date of Birth"
+              id="formDateOfBirth"
+            /><br />
+            <input type="text" placeholder="Login" id="formLogin" /><br />
+            <input type="text" placeholder="Password" id="formPassword" /><br />
+            <input type="submit" value="Send" id="formSubmit" />
+          </form>
+        </div>
       </div>
     </div>
 
@@ -38,6 +53,7 @@
       var apiroot = "http://127.0.0.1:8000/api";
       var csrftoken = getCookie("csrftoken");
       var listLength = 0;
+      var activeItem = null
 
       function getCookie(name) {
         let cookieValue = null;
@@ -75,19 +91,38 @@
                 <td>${users[i].dateOfBirth}</td>
                 <td>${users[i].login}</td>
                 <td>${users[i].password}</td>
-                <td>${users[i].isDeleted}</td>
                 <td>
-                  <input type="button" value="Delete" class="deleteUser" onclick="deleteUser('${url}', ${users[i].id})">
-                  </td>
+                  <input type="button" value="Delete" class="deleteUser">
+                </td>
+                <td>
+                  <input type="button" value="Edit" class="editUser">
+                </td>
               </tr>
               `;
               table.innerHTML += row;
             }
+            
+            for (var i in users){
+                var deleteButton = document.getElementsByClassName("deleteUser")[i];
+                var editButton = document.getElementsByClassName("editUser")[i];
+
+                deleteButton.addEventListener('click', (function(item){
+                  return function(){
+                    deleteUser(url, item)
+                  }
+                  })(users[i]))
+
+                editButton.addEventListener('click', (function(item){
+                  return function(){
+                    editUserForm(url, item)
+                  }
+                  })(users[i]))
+              }
           });
       }
 
-      function deleteUser(url, id) {
-        var endpoint = url + "/user-delete/" + id;
+      function deleteUser(url, user) {
+        var endpoint = url + "/user-delete/" + user.id;
         const request = new Request(endpoint, {
           headers: { "X-CSRFToken": csrftoken },
         });
@@ -98,6 +133,55 @@
           listUsers(apiroot);
         });
       }
+
+      function editUserForm(url, user) {
+        activeItem = user;
+        document.getElementById("form-header").innerHTML = "Edit";
+        document.getElementById("formId").value = activeItem.id;
+        document.getElementById("formName").value = activeItem.name;
+        document.getElementById("formSurname").value = activeItem.surname;
+        document.getElementById("formDateOfBirth").value = activeItem.dateOfBirth;
+        document.getElementById("formLogin").value = activeItem.login;
+        document.getElementById("formPassword").value = activeItem.password;
+      }
+
+      var form = document.getElementById('form-wrapper');
+		  form.addEventListener('submit', function(e){
+        e.preventDefault()
+        var url = apiroot + `/user-create`
+        if (activeItem != null){
+          var url = apiroot + `/user-update/${activeItem.id}`
+          activeItem = null
+          document.getElementById("form-header").innerHTML = "Create";
+        }
+        console.log(url)
+        var Id = document.getElementById('formId').value
+        var Name = document.getElementById('formName').value
+        var Surname = document.getElementById('formSurname').value
+        var DateOfBirth = document.getElementById('formDateOfBirth').value
+        var Login = document.getElementById('formLogin').value
+        var Password = document.getElementById('formPassword').value
+        fetch(url, {
+          method:'POST',
+          headers:{
+            'Content-type':'application/json',
+            'X-CSRFToken':csrftoken,
+          },
+          body:JSON.stringify({
+            'id':Id,
+            'name':Name,
+            'surname':Surname,
+            'dateOfBirth':DateOfBirth,
+            'login':Login,
+            'password':Password,
+            'isDeleted': false
+          })
+        }
+        ).then(function(response){
+          listUsers(apiroot)
+          document.getElementById('form').reset()
+        })
+      })
 
       listUsers(apiroot);
     </script>

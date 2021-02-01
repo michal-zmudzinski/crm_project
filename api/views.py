@@ -20,7 +20,7 @@ def apiRoot(request):
 
 @api_view(['GET'])
 def userList(request):
-    queryset = Users.objects.all()
+    queryset = Users.objects.filter(isDeleted=False)
     serializer = UserSerializer(queryset, many=True)
     return Response(serializer.data)
 
@@ -51,7 +51,7 @@ def userUpdate(request, pk):
     return Response(serializer.errors)
 
 
-@api_view(['DELETE'])
+@api_view(['GET'])
 def userDelete(request, pk):
     user = Users.objects.get(id=pk)
     user.isDeleted = True
